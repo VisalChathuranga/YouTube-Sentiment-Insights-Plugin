@@ -5,8 +5,12 @@ __pycache__/
 
 # C extensions
 *.so
+data/*
 
-# Distribution / packaging
+# MLflow server access keys (sensitive credentials)
+mlflow-server_accessKeys.csv
+
+# Distribution / 
 .Python
 build/
 develop-eggs/
@@ -205,3 +209,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+/experiment_info.json
