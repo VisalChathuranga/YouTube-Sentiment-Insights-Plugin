@@ -1,0 +1,84 @@
+name: Deploy Application Docker Image to EC2 Instance
+# Defines the name of the workflow, which will appear in the GitHub Actions tab.
+
+on:
+  push:
+    branches: [main]
+# Specifies the trigger for the workflow: it runs automatically on every push to the 'main' branch.
+
+jobs:
+  Continuous-Integration:
+    runs-on: ubuntu-latest
+    # Defines a job called 'Continuous-Integration' that runs on the latest Ubuntu runner provided by GitHub.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # Checks out the repository code to the runner, allowing access to your project files.
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+        # Configures AWS credentials using secrets stored in GitHub, enabling AWS CLI commands.
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        # Logs into Amazon ECR to allow pushing Docker images, storing the registry output for later use.
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        # Builds a Docker image using the Dockerfile, tags it with the Git commit SHA, pushes it to ECR,
+        # and outputs the image URL for use in the next job.
+
+  Continuous-Deployment:
+    needs: Continuous-Integration
+    runs-on: self-hosted
+    # Defines a job called 'Continuous-Deployment' that depends on the 'Continuous-Integration' job
+    # and runs on a self-hosted runner (e.g., your EC2 instance).
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # Checks out the repository code again on the self-hosted runner (optional, for consistency).
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+        # Re-configures AWS credentials on the self-hosted runner for ECR access.
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        # Logs into ECR on the self-hosted runner to pull the Docker image.
+
+      - name: Stop and remove existing container (if any)
+        run: |
+          docker stop youtube-sentiment-container || true
+          docker rm youtube-sentiment-container || true
+        # Stops and removes any existing container with the same name to avoid conflicts,
+        # using '|| true' to prevent failure if no container exists.
+
+      - name: Run Docker Image to serve users
+        run: |
+          docker run -d \
+            --name youtube-sentiment-container \
+            -p 5000:5000 \
+            -e MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }} \
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO }}:${{ github.sha }}
+        # Runs a new Docker container in detached mode, naming it 'youtube-sentiment-container',
+        # maps port 5000, sets the MLflow URI environment variable, and uses the latest image from ECR.

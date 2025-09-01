@@ -7,8 +7,9 @@ __pycache__/
 *.so
 data/*
 
-# MLflow server access keys (sensitive credentials)
+# AWS server access keys (sensitive credentials)
 mlflow-server_accessKeys.csv
+Youtube-Sentiment-Insights_accessKeys.csv
 
 # Distribution / 
 .Python
