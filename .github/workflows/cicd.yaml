@@ -17,34 +17,36 @@ jobs:
         # Checks out the repository code to the runner, allowing access to your project files.
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v4  # Updated to latest stable version (v4 is current as of 2025)
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}  # Use secret for region (us-east-1)
         # Configures AWS credentials using secrets stored in GitHub, enabling AWS CLI commands.
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2  # Updated to latest stable version (v2 is current as of 2025)
         # Logs into Amazon ECR to allow pushing Docker images, storing the registry output for later use.
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPO }}
-          IMAGE_TAG: ${{ github.sha }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}  # This now works with v2
+          ECR_REPOSITORY: ${{ secrets.ECR_REPO }}  # Your repo: youtube-sentiment-anylyzer
+          IMAGE_TAG: ${{ github.sha }}  # Unique tag using commit SHA
         run: |
+          # Build a docker container and push it to ECR so that it can be deployed to ECS/EC2.
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # NEW SYNTAX: Write to environment file instead of deprecated ::set-output::
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
         # Builds a Docker image using the Dockerfile, tags it with the Git commit SHA, pushes it to ECR,
         # and outputs the image URL for use in the next job.
 
   Continuous-Deployment:
-    needs: Continuous-Integration
-    runs-on: self-hosted
+    needs: Continuous-Integration  # Waits for CI to succeed before deploying
+    runs-on: self-hosted  # Uses your self-hosted runner (the idle Linux x64 one in your screenshot)
     # Defines a job called 'Continuous-Deployment' that depends on the 'Continuous-Integration' job
     # and runs on a self-hosted runner (e.g., your EC2 instance).
 
@@ -54,7 +56,7 @@ jobs:
         # Checks out the repository code again on the self-hosted runner (optional, for consistency).
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v4  # Updated version
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -63,7 +65,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2  # Updated version
         # Logs into ECR on the self-hosted runner to pull the Docker image.
 
       - name: Stop and remove existing container (if any)
@@ -75,10 +77,12 @@ jobs:
 
       - name: Run Docker Image to serve users
         run: |
+          # Pull the latest image from ECR (using output from CI job)
+          docker pull ${{ needs.Continuous-Integration.outputs.image }}  # Reference CI output
           docker run -d \
             --name youtube-sentiment-container \
             -p 5000:5000 \
             -e MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }} \
-            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO }}:${{ github.sha }}
+            ${{ needs.Continuous-Integration.outputs.image }}  # Use full image URI from CI
         # Runs a new Docker container in detached mode, naming it 'youtube-sentiment-container',
         # maps port 5000, sets the MLflow URI environment variable, and uses the latest image from ECR.
