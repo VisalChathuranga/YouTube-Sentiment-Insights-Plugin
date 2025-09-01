@@ -9,7 +9,7 @@ on:
 jobs:
   Continuous-Integration:
     runs-on: ubuntu-latest
-    # Defines a job called 'Continuous-Integration' that runs on the latest Ubuntu runner provided by GitHub.
+    # Defines an job called 'Continuous-Integration' that runs on the latest Ubuntu runner provided by GitHub.
 
     steps:
       - name: Checkout
