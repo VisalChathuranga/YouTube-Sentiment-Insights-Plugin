@@ -112,6 +112,7 @@ def home():
 def predict_with_timestamps():
     data = request.json
     comments_data = data.get('comments')
+    logger.info(f"Received comments: {comments_data}")
     
     if not comments_data:
         return jsonify({"error": "No comments provided"}), 400

@@ -1,3 +1,7 @@
+function sanitizeText(text) {
+  return text.replace(/[^\x20-\x7E]/g, ''); // Remove non-printable ASCII characters
+}
+
 // Function to decode HTML entities
 function decodeHTMLEntities(text) {
   if (!text) return '';
@@ -80,12 +84,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       // Enhanced initial display
       outputDiv.innerHTML = `
-        <div class="section-title">📹 Video Analysis</div>
+        <div class="section-title">${sanitizeText("📹 Video Analysis")}</div>
         <div class="video-info">
           <span>Video ID:</span>
           <span class="video-id">${videoId}</span>
         </div>
-        ${createLoadingElement("Fetching comments from YouTube API...")}
+        ${createLoadingElement(sanitizeText("Fetching comments from YouTube API..."))}
       `;
 
       try {
@@ -101,13 +105,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Update with fetched comments count
         outputDiv.innerHTML = `
-          <div class="section-title">📹 Video Analysis</div>
+          <div class="section-title">${sanitizeText("📹 Video Analysis")}</div>
           <div class="video-info">
             <span>Video ID:</span>
             <span class="video-id">${videoId}</span>
           </div>
-          <div class="success">✅ Fetched ${formatNumber(comments.length)} comments successfully!</div>
-          ${createLoadingElement("Running AI sentiment analysis...")}
+          ${createLoadingElement(sanitizeText("Fetching comments from YouTube API..."))}
         `;
 
         const predictions = await getSentimentPredictions(comments);
@@ -140,17 +143,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           // Clear loading and add results
           outputDiv.innerHTML = `
-            <div class="section-title">📹 Video Analysis</div>
+            <div class="section-title">${sanitizeText("📹 Video Analysis")}</div>
             <div class="video-info">
               <span>Video ID:</span>
               <span class="video-id">${videoId}</span>
             </div>
+            ${createLoadingElement(sanitizeText("Fetching comments from YouTube API..."))}
           `;
 
           // Add the Enhanced Comment Analysis Summary section
           outputDiv.innerHTML += `
             <div class="section">
-              <div class="section-title">📊 Analysis Summary</div>
+              <div class="section-title">${sanitizeText("📊 Analysis Summary")}</div>
               <div class="metrics-container">
                 <div class="metric">
                   <div class="metric-title">Total Comments</div>
@@ -175,7 +179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           // Add the Sentiment Distribution section
           outputDiv.innerHTML += `
             <div class="section">
-              <div class="section-title">🎯 Sentiment Distribution</div>
+              <div class="section-title">${sanitizeText("🎯 Sentiment Distribution")}</div>
               <div id="chart-container" class="chart-container">
                 ${createLoadingElement("Generating sentiment chart...")}
               </div>
@@ -187,7 +191,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           // Add the Sentiment Trend Graph section
           outputDiv.innerHTML += `
             <div class="section">
-              <div class="section-title">📈 Sentiment Over Time</div>
+              <div class="section-title">${sanitizeText("📈 Sentiment Over Time")}</div>
               <div id="trend-graph-container" class="trend-graph-container">
                 ${createLoadingElement("Generating trend analysis...")}
               </div>
@@ -199,7 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           // Add the Word Cloud section
           outputDiv.innerHTML += `
             <div class="section">
-              <div class="section-title">☁️ Comment Word Cloud</div>
+              <div class="section-title">${sanitizeText("☁️ Comment Word Cloud")}</div>
               <div id="wordcloud-container" class="wordcloud-container">
                 ${createLoadingElement("Creating word cloud...")}
               </div>
@@ -212,7 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const topComments = predictions.slice(0, 15);
           outputDiv.innerHTML += `
             <div class="section">
-              <div class="section-title">💬 Top Comments Analysis</div>
+              <div class="section-title">${sanitizeText("💬 Top Comments Analysis")}</div>
               <ul class="comment-list">
                 ${topComments.map((item, index) => {
                   const sentimentInfo = formatSentimentLabel(item.sentiment);

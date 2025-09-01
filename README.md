@@ -27,6 +27,10 @@ YouTube comments, from **data ingestion to deployment**.
 -   🖥️ **Chrome Extension Frontend**: Interactive UI for real-time
     sentiment insights.
 
+## 📽️ Demo Video
+
+[![Watch the demo](https://img.youtube.com/vi/lBIzfCu8vBM/0.jpg)](https://youtu.be/lBIzfCu8vBM)
+
 ------------------------------------------------------------------------
 
 ## 🛠️ Getting Started
